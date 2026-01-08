@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PREDATOR_X | ULTIMATE TRANSIT SUITE</title>
+    <style>
+        :root {
+            --accent: #00e5ff;
+            --bg-dark: #050505;
+            --panel: #111114;
+            --border: #222;
+            --text: #e0e0e0;
+            --danger: #ff1744;
+            --warning: #ffea00;
+            --success: #00e676;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            font-family: 'SF Mono', 'Courier New', monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--panel);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            color: var(--success);
+        }
+
+        .dot {
+            height: 6px;
+            width: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* MAIN DASHBOARD */
+        .dashboard {
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 1px;
+            background: var(--border);
+        }
+
+        .module {
+            background: var(--bg-dark);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .full-width { grid-column: span 2; }
+
+        .label { font-size: 9px; color: #555; text-transform: uppercase; margin-bottom: 4px; }
+        .val { font-size: 18px; color: var(--accent); }
+        .big-val { font-size: 48px; font-weight: bold; text-align: center; color: var(--text); }
+
+        /* LINE ANALYSIS LIST */
+        .line-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--panel);
+            padding: 10px;
+        }
+
+        .line-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 12px;
+        }
+
+        .delay-warning { color: var(--danger); font-weight: bold; }
+
+        /* CONTROLS */
+        .controls {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+        }
+
+        button {
+            background: #1a1a1c;
+            border: 1px solid #333;
+            color: var(--text);
+            padding: 12px 5px;
+            font-size: 10px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:active { background: var(--accent); color: #000; }
+        .active-btn { border-color: var(--accent); color: var(--accent); }
+
+        /* OVERLAYS */
+        #stealth-overlay {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 10000;
+            display: none;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="stealth-overlay" onclick="toggleStealth()"></div>
+
+<header>
+    <div class="live-indicator"><span class="dot"></span> SYSTEM_ONLINE</div>
+    <div id="clock">00:00:00</div>
+</header>
+
+<div class="dashboard">
+    <div class="module">
+        <div class="label">GPS_POS</div>
+        <div id="coords" class="val">WAITING...</div>
+    </div>
+    <div class="module">
+        <div class="label">SÄÄKORJAUS</div>
+        <div id="weather" class="val">SNOW_OFF (1.0x)</div>
+    </div>
+
+    <div class="module full-width">
+        <div class="label" style="text-align: center;">SAAPUMISARVIO (SMART_ETA)</div>
+        <div id="main-eta" class="big-val">--:--</div>
+        <div id="route-desc" style="text-align: center; font-size: 10px; color: #444;">EI AKTIIVISTA REITTIÄ</div>
+    </div>
+
+    <div class="module full-width">
+        <div class="label">LINJA-ANALYYSI (REAALIAIKAINEN)</div>
+        <div class="line-list" id="line-analysis">
+            <div class="line-item"><span>Analysoidaan verkkoa...</span></div>
+        </div>
+    </div>
+
+    <div class="module">
+        <div class="label">KUSKIPROFIILI</div>
+        <div id="driver-status" class="val">READY</div>
+    </div>
+    <div class="module">
+        <div class="label">STATUS</div>
+        <div id="system-status" class="val" style="color: var(--success);">OK</div>
+    </div>
+</div>
+
+<div class="controls">
+    <button onclick="initSystem()" class="active-btn">KÄYNNISTÄ</button>
+    <button onclick="toggleStealth()">STEALTH</button>
+    <button onclick="openOsint()">OSINT_MODE</button>
+</div>
+
+<script>
+    let isLive = false;
+    let stealth = false;
+
+    // --- ANALYYSI-DATA (Simuloitu HSL-data) ---
+    const mockLines = [
+        { line: "Bussi 500", status: "MYÖHÄSSÄ", delay: "+4min", driver: "AGGR" },
+        { line: "Bussi 550", status: "AIKATAULUSSA", delay: "0", driver: "NORM" },
+        { line: "Metro M1", status: "AIKATAULUSSA", delay: "0", driver: "AUTO" },
+        { line: "Juna K", status: "MYÖHÄSSÄ", delay: "+12min", driver: "SLOW" }
+    ];
+
+    function initSystem() {
+        isLive = true;
+        speak("Järjestelmä aktivoitu. Aloitetaan linja-analyysi.");
+        updateGPS();
+        runAnalysis();
+        navigator.vibrate([100, 50, 100]);
+    }
+
+    function updateGPS() {
+        navigator.geolocation.watchPosition(pos => {
+            document.getElementById('coords').innerText = 
+                pos.coords.latitude.toFixed(4) + ", " + pos.coords.longitude.toFixed(4);
+        });
+    }
+
+    function runAnalysis() {
+        const list = document.getElementById('line-analysis');
+        list.innerHTML = "";
+        
+        mockLines.forEach(l => {
+            const div = document.createElement('div');
+            div.className = 'line-item';
+            const delayClass = l.delay !== "0" ? 'delay-warning' : '';
+            div.innerHTML = `
+                <span>${l.line}</span>
+                <span class="${delayClass}">${l.status} (${l.delay})</span>
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('driver-status').innerText = "VAIHTELEVA";
+        document.getElementById('main-eta').innerText = "05:45";
+    }
+
+    function toggleStealth() {
+        stealth = !stealth;
+        document.getElementById('stealth-overlay').style.display = stealth ? 'block' : 'none';
+        if(stealth) speak("Pimeä tila.");
+    }
+
+    function openOsint() {
+        speak("Siirrytään tiedonhakuun.");
+        // Vaihtaa näkymän hakukoneeseen
+    }
+
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'fi-FI';
+        msg.rate = 0.95;
+        window.speechSynthesis.speak(msg);
+    }
+
+    // Kello
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Värinähälytys jos linja on pahasti myöhässä (simuloitu)
+    setInterval(() => {
+        if(isLive) {
+            // Jos jokin linja on pahasti myöhässä, anna merkki
+            navigator.vibrate(200);
+        }
+    }, 30000);
+</script>
+
+</body>
+</html>
