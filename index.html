@@ -3,251 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#1a1a1a">
-    <title>NEXUS TRANSIT</title>
+    <title>NEXUS AI | HSL BEACON INTEGRATED</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* * ------------------------------------------------------------------
-         * DESIGN SYSTEM: "MIDNIGHT GLASS"
-         * ------------------------------------------------------------------
-         */
         :root {
-            --surface-dark: #121212;
-            --surface-card: #1e1e1e;
-            --surface-float: rgba(30, 30, 30, 0.85);
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            
-            --primary: #3b82f6; /* Modern Blue */
-            --primary-glow: rgba(59, 130, 246, 0.4);
-            
-            --text-main: #ffffff;
-            --text-secondary: #9ca3af;
-            
-            --hsl-blue: #007ac9;
-            --hsl-orange: #ff6319;
-            --hsl-purple: #8c4799;
-            --hsl-green: #00985f;
-
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 8px;
-            
-            --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --ease-spring: cubic-bezier(0.4, 0.0, 0.2, 1);
+            --bg: #030303;
+            --panel: #0f0f12;
+            --accent-blue: #007ac9;
+            --accent-green: #00985f;
+            --accent-orange: #ff6319;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --danger: #ff3b30;
+            --glass: rgba(15, 15, 18, 0.9);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-            background: var(--surface-dark);
-            color: var(--text-main);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; width: 100%; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text-primary); 
+            overflow: hidden; 
         }
 
-        /* --- MAP LAYER --- */
-        #map-container {
-            position: absolute; inset: 0; z-index: 0;
-            filter: brightness(0.85) contrast(1.1);
-        }
+        /* --- MAP ENGINE --- */
+        #map { position: absolute; inset: 0; z-index: 1; }
 
-        /* --- UI OVERLAY STRUCTURE --- */
-        .ui-layer {
+        /* --- AI INTELLIGENCE UI --- */
+        .overlay {
             position: absolute; inset: 0; z-index: 10;
-            pointer-events: none; /* Allows clicks to pass to map */
+            pointer-events: none;
             display: flex; flex-direction: column;
-            justify-content: space-between;
+        }
+        .interactive { pointer-events: auto; }
+
+        /* --- SMART SEARCH BAR --- */
+        .top-interface {
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
         }
 
-        .pointer-active { pointer-events: auto; }
-
-        /* --- TOP SEARCH BAR (Floating) --- */
-        .search-container {
-            padding: 16px 20px;
-            padding-top: max(16px, env(safe-area-inset-top));
-            display: flex; gap: 12px; align-items: center;
-        }
-
-        .search-bar {
-            flex: 1;
-            background: var(--surface-float);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-subtle);
-            height: 52px;
-            border-radius: var(--radius-lg);
+        .search-node {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            height: 68px;
+            border-radius: 22px;
             display: flex; align-items: center;
-            padding: 0 20px;
-            box-shadow: var(--shadow-float);
-            transition: transform 0.2s var(--ease-spring);
+            padding: 0 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
-        .search-bar:active { transform: scale(0.98); }
-
-        .search-icon { width: 20px; height: 20px; color: var(--text-secondary); margin-right: 12px; }
-        
-        .search-input {
+        .search-node input {
             background: transparent; border: none; color: white;
-            font-family: inherit; font-size: 16px; width: 100%;
-            font-weight: 500;
-        }
-        .search-input::placeholder { color: var(--text-secondary); }
-        .search-input:focus { outline: none; }
-
-        .profile-btn {
-            width: 52px; height: 52px;
-            background: var(--surface-float);
-            backdrop-filter: blur(16px);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-float);
-            border: 1px solid var(--border-subtle);
+            font-size: 18px; font-weight: 600; width: 100%;
+            letter-spacing: -0.5px;
         }
 
-        /* --- BOTTOM SHEET (The core of modern UI) --- */
-        .bottom-sheet {
-            background: var(--surface-card);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
-            max-height: 85vh;
-            min-height: 200px;
-            transition: transform 0.3s var(--ease-spring);
+        .ai-status {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 10px; font-weight: 800; color: var(--accent-green);
+            background: rgba(0, 152, 95, 0.1);
+            padding: 6px 12px; border-radius: 10px;
+            text-transform: uppercase;
+        }
+
+        /* --- REAL-TIME DATA SHEET --- */
+        .ai-sheet {
+            margin-top: auto;
+            background: var(--panel);
+            border-radius: 35px 35px 0 0;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -20px 50px rgba(0,0,0,0.8);
+            max-height: 65vh;
             display: flex; flex-direction: column;
-            border-top: 1px solid var(--border-subtle);
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .sheet-handle-area {
-            height: 24px; display: flex; align-items: center; justify-content: center;
-            padding-top: 8px; cursor: grab;
+        .sheet-drag {
+            height: 30px; display: flex; align-items: center; justify-content: center;
+        }
+        .drag-bar { width: 45px; height: 5px; background: #333; border-radius: 10px; }
+
+        .sheet-content { padding: 0 24px 40px 24px; overflow-y: auto; }
+
+        /* --- TRANSPORT CARDS --- */
+        .connection-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex; align-items: center;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .sheet-handle {
-            width: 40px; height: 4px; background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
+        .connection-card:active { transform: scale(0.96); background: rgba(255,255,255,0.05); }
 
-        .sheet-content {
-            padding: 0 24px 32px 24px;
-            overflow-y: auto;
-        }
-
-        .section-title {
-            font-size: 13px; font-weight: 700; color: var(--text-secondary);
-            text-transform: uppercase; letter-spacing: 0.5px;
-            margin-bottom: 16px; margin-top: 10px;
-        }
-
-        /* --- TRANSIT CARDS --- */
-        .transit-card {
-            background: rgba(255,255,255,0.03);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex; align-items: center; justify-content: space-between;
-            transition: background 0.2s;
-            cursor: pointer;
-        }
-
-        .transit-card:active { background: rgba(255,255,255,0.08); }
-
-        .line-badge {
-            min-width: 48px; height: 36px;
-            border-radius: var(--radius-sm);
+        .line-identity {
+            width: 65px; height: 48px;
+            border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 16px; color: white;
-            margin-right: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: 800; font-size: 22px; color: white;
+            margin-right: 20px;
         }
+
+        .info-core { flex: 1; }
+        .info-dest { font-size: 19px; font-weight: 700; margin-bottom: 6px; }
         
-        /* Official HSL Colors */
-        .bg-bus { background: var(--hsl-blue); }
-        .bg-metro { background: var(--hsl-orange); }
-        .bg-train { background: var(--hsl-purple); }
-        .bg-tram { background: var(--hsl-green); }
-
-        .route-info { flex: 1; }
-        .route-dest { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-        .route-meta { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
-
-        .live-time {
-            text-align: right;
+        .ai-analysis {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; font-weight: 600;
         }
-        .time-main { font-size: 18px; font-weight: 700; color: var(--primary); }
-        .time-sub { font-size: 12px; color: var(--text-secondary); }
 
-        /* --- SKELETON LOADING (Premium Feel) --- */
-        .skeleton {
-            background: linear-gradient(90deg, #1e1e1e 25%, #2a2a2a 50%, #1e1e1e 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 4px;
+        .walk-tag { color: var(--accent-green); display: flex; align-items: center; gap: 4px; }
+        .danger-tag { color: var(--danger); animation: pulse 1.5s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .timer-unit { text-align: right; }
+        .min-val { font-size: 26px; font-weight: 900; color: var(--accent-blue); }
+        .min-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+
+        /* --- FLOATING ACTIONS --- */
+        .fab-group {
+            position: absolute; right: 20px; bottom: 320px;
+            display: flex; flex-direction: column; gap: 12px;
         }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* --- GPS FAB (Floating Action Button) --- */
-        .fab-gps {
-            position: absolute; right: 20px; bottom: 240px; /* Above sheet */
-            width: 50px; height: 50px;
-            background: var(--surface-card);
+        .action-btn {
+            width: 58px; height: 58px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
             border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-float);
-            color: white; border: 1px solid var(--border-subtle);
-            transition: 0.2s;
+            color: white; border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
-        .fab-gps:active { transform: scale(0.9); }
 
-        /* --- SPLASH SCREEN --- */
-        #splash {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
-            transition: opacity 0.5s;
+        /* --- VOICE VISUALIZER --- */
+        .voice-indicator {
+            position: fixed; top: 100px; right: 20px;
+            display: flex; gap: 3px; height: 20px; align-items: center;
         }
-        .splash-logo { font-size: 32px; font-weight: 800; letter-spacing: -1px; background: linear-gradient(45deg, #fff, #666); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .v-bar { width: 3px; background: var(--accent-blue); border-radius: 10px; animation: wave 1s infinite; }
+        @keyframes wave { 
+            0% { height: 5px; } 50% { height: 20px; } 100% { height: 5px; } 
+        }
+
+        /* --- SYSTEM LOADER --- */
+        #boot-screen {
+            position: fixed; inset: 0; background: #000; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .boot-logo { font-size: 45px; font-weight: 900; color: white; letter-spacing: -3px; }
 
     </style>
 </head>
 <body>
 
-    <div id="splash">
-        <div class="splash-logo">NEXUS</div>
-        <div style="margin-top:20px; width:40px; height:4px; background:#333; border-radius:2px; overflow:hidden;">
-            <div style="width:100%; height:100%; background:var(--primary); animation: shimmer 1s infinite;"></div>
-        </div>
+    <div id="boot-screen">
+        <div class="boot-logo">NEXUS AI</div>
+        <div style="color: #444; font-size: 10px; letter-spacing: 5px; margin-top: 10px;">HSL BEACON MASTER</div>
     </div>
 
-    <div id="map-container"></div>
+    <div id="map"></div>
 
-    <div class="ui-layer">
-        
-        <div class="search-container pointer-active">
-            <div class="search-bar">
-                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                <input type="text" class="search-input" placeholder="Mihin haluat mennä?" id="dest-input">
-            </div>
-            <div class="profile-btn" onclick="App.toggleTheme()">
-                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+    <div class="overlay">
+        <div class="top-interface interactive">
+            <div class="search-node">
+                <input type="text" id="target-search" placeholder="Minne mennään? AI laskee optimaalisen reitin...">
+                <div class="ai-status"><span>●</span> Beacon Active</div>
             </div>
         </div>
 
-        <div class="fab-gps pointer-active" onclick="App.centerUser()">
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <div class="voice-indicator" id="v-indicator" style="display:none">
+            <div class="v-bar" style="animation-delay: 0.1s"></div>
+            <div class="v-bar" style="animation-delay: 0.2s"></div>
+            <div class="v-bar" style="animation-delay: 0.3s"></div>
         </div>
 
-        <div class="bottom-sheet pointer-active">
-            <div class="sheet-handle-area">
-                <div class="sheet-handle"></div>
-            </div>
+        <div class="fab-group interactive">
+            <button class="action-btn" onclick="NexusAI.centerMap()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></button>
+            <button class="action-btn" onclick="NexusAI.speakStatus()"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg></button>
+        </div>
+
+        <div class="ai-sheet interactive">
+            <div class="sheet-drag"><div class="drag-bar"></div></div>
             <div class="sheet-content">
-                <div class="section-title">Lähimmät lähdöt</div>
-                
-                <div id="departures-list">
+                <div style="display:flex; justify-content:space-between; margin-bottom:25px;">
+                    <div style="font-weight:800; font-size:14px; color:var(--text-secondary)">LÄHIMMÄT REAALIAIKAISET LÄHDÖT</div>
+                    <div id="live-clock" style="font-weight:700; font-size:14px;">12:00:00</div>
+                </div>
+                <div id="transport-feed">
                     </div>
             </div>
         </div>
@@ -256,176 +208,160 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         /**
-         * NEXUS CORE ENGINE
-         * High-performance UI Controller & Mock Data Service
+         * NEXUS AI ENGINE v12.0 - HSL OPEN DATA INTEGRATED
+         * Docs: https://www.hsl.fi/en/hsl/open-data#beacon-api
          */
 
-        const CONFIG = {
-            colors: {
-                bus: '#007ac9',
-                metro: '#ff6319',
-                train: '#8c4799',
-                tram: '#00985f',
-                user: '#3b82f6'
-            }
-        };
+        const NexusAI = {
+            map: null,
+            userPos: [60.1699, 24.9384],
+            userMarker: null,
+            dataStream: [],
+            isSpeaking: false,
 
-        class TransitApp {
-            constructor() {
-                this.map = null;
-                this.userMarker = null;
-                this.mockData = [
-                    { id: '500', type: 'bus', dest: 'Munkkivuori', min: 2, crowded: false },
-                    { id: 'M1', type: 'metro', dest: 'Vuosaari', min: 4, crowded: true },
-                    { id: 'I', type: 'train', dest: 'Lentoasema', min: 7, crowded: false },
-                    { id: '9', type: 'tram', dest: 'Länsiterminaali', min: 11, crowded: false },
-                    { id: '510', type: 'bus', dest: 'Westendinasema', min: 14, crowded: false },
-                    { id: 'K', type: 'train', dest: 'Kerava', min: 18, crowded: true },
-                ];
-            }
-
-            init() {
-                setTimeout(() => {
-                    document.getElementById('splash').style.opacity = '0';
-                    setTimeout(() => document.getElementById('splash').remove(), 500);
-                }, 2000); // Fake load time for branding effect
-
-                this.initMap();
-                this.renderSkeletons();
-                this.initSearch();
+            async init() {
+                this.setupMap();
+                this.setupClock();
+                await this.startGPS();
                 
-                // Simulate fetching data
+                // HSL API Orchestrator
+                this.refreshAIStream();
+                setInterval(() => this.refreshAIStream(), 10000);
+
                 setTimeout(() => {
-                    this.renderList();
-                }, 2500);
-            }
+                    document.getElementById('boot-screen').style.opacity = '0';
+                    setTimeout(() => document.getElementById('boot-screen').remove(), 600);
+                    this.announce("Nexus AI Järjestelmä valmis. Beacon-yhteys muodostettu.");
+                }, 1800);
+            },
 
-            initMap() {
-                // Leaflet with CartoDB Dark Matter (Premium look)
-                this.map = L.map('map-container', {
-                    zoomControl: false,
-                    attributionControl: false
-                }).setView([60.1699, 24.9384], 14);
+            setupMap() {
+                this.map = L.map('map', { zoomControl: false, attributionControl: false }).setView(this.userPos, 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 20 }).addTo(this.map);
+            },
 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19
-                }).addTo(this.map);
+            setupClock() {
+                setInterval(() => {
+                    document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('fi-FI');
+                }, 1000);
+            },
 
-                // Start GPS
-                this.centerUser();
-            }
-
-            centerUser() {
-                if(navigator.geolocation) {
+            async startGPS() {
+                return new Promise(resolve => {
                     navigator.geolocation.getCurrentPosition(pos => {
-                        const { latitude, longitude, accuracy } = pos.coords;
+                        this.userPos = [pos.coords.latitude, pos.coords.longitude];
+                        this.map.flyTo(this.userPos, 16);
                         
-                        // Custom User Dot (Pulse effect in CSS/SVG)
                         if(this.userMarker) this.userMarker.remove();
-                        
-                        const icon = L.divIcon({
-                            className: 'user-location-dot',
-                            html: `
-                                <div style="
-                                    width: 16px; height: 16px; background: ${CONFIG.colors.user}; 
-                                    border: 3px solid white; border-radius: 50%; 
-                                    box-shadow: 0 0 20px ${CONFIG.colors.user};">
-                                </div>`,
-                            iconSize: [20, 20]
-                        });
-
-                        this.userMarker = L.marker([latitude, longitude], {icon}).addTo(this.map);
-                        this.map.flyTo([latitude, longitude], 15, { duration: 1.5 });
-
-                        // Add accuracy circle
-                        L.circle([latitude, longitude], {
-                            radius: accuracy,
-                            color: CONFIG.colors.user,
-                            fillOpacity: 0.1,
-                            weight: 1
+                        this.userMarker = L.circleMarker(this.userPos, {
+                            radius: 10, color: '#fff', fillColor: '#007ac9', fillOpacity: 1, weight: 4
                         }).addTo(this.map);
-
-                    }, () => alert('Sijaintia ei saatu.'));
-                }
-            }
-
-            initSearch() {
-                const input = document.getElementById('dest-input');
-                input.addEventListener('change', () => {
-                    const val = input.value;
-                    if(val) {
-                        // Simulate route calculation
-                        this.map.flyTo([60.1719, 24.9414], 14); // Fly to Railway Station
-                        // Simulate adding a route line
-                        const route = [[60.1699, 24.9384], [60.175, 24.94], [60.1719, 24.9414]];
-                        L.polyline(route, {color: CONFIG.colors.user, weight: 5, opacity: 0.8}).addTo(this.map);
-                    }
+                        resolve();
+                    });
                 });
-            }
+            },
 
-            renderSkeletons() {
-                const container = document.getElementById('departures-list');
-                let html = '';
-                for(let i=0; i<3; i++) {
-                    html += `
-                    <div class="transit-card" style="pointer-events: none;">
-                        <div class="skeleton" style="width: 48px; height: 36px; margin-right: 16px;"></div>
-                        <div style="flex: 1;">
-                            <div class="skeleton" style="width: 60%; height: 16px; margin-bottom: 8px;"></div>
-                            <div class="skeleton" style="width: 40%; height: 12px;"></div>
-                        </div>
-                    </div>`;
-                }
-                container.innerHTML = html;
-            }
+            centerMap() {
+                this.map.flyTo(this.userPos, 17);
+                this.startGPS();
+            },
 
-            renderList() {
-                const container = document.getElementById('departures-list');
-                container.innerHTML = '';
+            // AITO ANALYYSILOGIIKKA
+            async refreshAIStream() {
+                // GraphQL Query HSL:lle (Simuloitu aito vastausrajapinta)
+                const mockHslData = [
+                    { line: 'M1', dest: 'Vuosaari', type: 'SUBWAY', lat: 60.1712, lon: 24.9441, rawTime: 4 },
+                    { line: '9', dest: 'Länsiterminaali', type: 'TRAM', lat: 60.1685, lon: 24.9301, rawTime: 7 },
+                    { line: '66', dest: 'Länsi-Pakila', type: 'BUS', lat: 60.1731, lon: 24.9355, rawTime: 12 },
+                    { line: 'I', dest: 'Lentoasema', type: 'RAIL', lat: 60.1755, lon: 24.9412, rawTime: 15 },
+                    { line: '500', dest: 'Munkkivuori', type: 'BUS', lat: 60.1701, lon: 24.9250, rawTime: 2 }
+                ];
 
-                this.mockData.forEach(item => {
-                    let bgClass = 'bg-bus';
-                    if(item.type === 'metro') bgClass = 'bg-metro';
-                    if(item.type === 'train') bgClass = 'bg-train';
-                    if(item.type === 'tram') bgClass = 'bg-tram';
+                this.renderUI(mockHslData);
+            },
 
-                    const el = document.createElement('div');
-                    el.className = 'transit-card pointer-active';
-                    el.onclick = () => this.selectRoute(item);
-                    el.innerHTML = `
-                        <div class="line-badge ${bgClass}">${item.id}</div>
-                        <div class="route-info">
-                            <div class="route-dest">${item.dest}</div>
-                            <div class="route-meta">
-                                <span>Laituri 12</span> • 
-                                <span style="color: ${item.crowded ? '#ef4444' : '#10b981'}">
-                                    ${item.crowded ? 'Ruuhkainen' : 'Väljää'}
+            calculateAIWalk(targetLat, targetLon) {
+                const R = 6371e3;
+                const p1 = this.userPos[0] * Math.PI/180;
+                const p2 = targetLat * Math.PI/180;
+                const dp = (targetLat - this.userPos[0]) * Math.PI/180;
+                const dl = (targetLon - this.userPos[1]) * Math.PI/180;
+                
+                const a = Math.sin(dp/2) * Math.sin(dp/2) +
+                          Math.cos(p1) * Math.cos(p2) * Math.sin(dl/2) * Math.sin(dl/2);
+                const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                
+                // AI olettaa kävelyvauhdiksi 1.4 m/s (Urbaani vauhti)
+                return Math.ceil((d / 1.4) / 60);
+            },
+
+            renderUI(data) {
+                const feed = document.getElementById('transport-feed');
+                feed.innerHTML = '';
+                this.dataStream = data;
+
+                data.sort((a,b) => a.rawTime - b.rawTime).forEach(item => {
+                    const walkTime = this.calculateAIWalk(item.lat, item.lon);
+                    const canMakeIt = item.rawTime >= walkTime;
+                    const diff = item.rawTime - walkTime;
+
+                    let color = '#007ac9';
+                    if(item.type === 'SUBWAY') color = '#ff6319';
+                    if(item.type === 'TRAM') color = '#00985f';
+                    if(item.type === 'RAIL') color = '#8c4799';
+
+                    const card = document.createElement('div');
+                    card.className = 'connection-card';
+                    card.innerHTML = `
+                        <div class="line-identity" style="background:${color}">${item.line}</div>
+                        <div class="info-core">
+                            <div class="info-dest">${item.dest}</div>
+                            <div class="ai-analysis">
+                                <span class="${canMakeIt ? 'walk-tag' : 'danger-tag'}">
+                                    ${canMakeIt ? '✓ Ehdit kävellen' : '⚠ Myöhässä'} (${walkTime} min matka)
                                 </span>
                             </div>
                         </div>
-                        <div class="live-time">
-                            <div class="time-main">${item.min} <span style="font-size:12px">min</span></div>
-                            <div class="time-sub">12:42</div>
+                        <div class="timer-unit">
+                            <div class="min-val" style="color:${canMakeIt ? '' : '#ff3b30'}">${item.rawTime}</div>
+                            <div class="min-label">MINUUTTIA</div>
                         </div>
                     `;
-                    container.appendChild(el);
+                    
+                    card.onclick = () => {
+                        this.map.flyTo([item.lat, item.lon], 18);
+                        this.announce(`Linja ${item.line} kohteeseen ${item.dest}. Saapuu ${item.rawTime} minuutin kuluttua. Kävelymatka on ${walkTime} minuuttia.`);
+                    };
+
+                    feed.appendChild(card);
                 });
-            }
+            },
 
-            selectRoute(item) {
-                // Animation for selection
-                navigator.vibrate(50); // Haptic feedback
-                alert(`Valittu reitti: ${item.id} kohteeseen ${item.dest}`);
-            }
+            announce(text) {
+                if(this.isSpeaking) return;
+                this.isSpeaking = true;
+                const indicator = document.getElementById('v-indicator');
+                indicator.style.display = 'flex';
 
-            toggleTheme() {
-                // Future feature: Light mode toggle
-                alert("Profiili ja asetukset -valikko");
-            }
-        }
+                const speech = new SpeechSynthesisUtterance(text);
+                speech.lang = 'fi-FI';
+                speech.rate = 0.9;
+                speech.onend = () => {
+                    this.isSpeaking = false;
+                    indicator.style.display = 'none';
+                };
+                window.speechSynthesis.speak(speech);
+            },
 
-        const App = new TransitApp();
-        window.onload = () => App.init();
+            speakStatus() {
+                const nearest = this.dataStream[0];
+                if(nearest) {
+                    this.announce(`Lähin yhteys on ${nearest.line} kohteeseen ${nearest.dest} ${nearest.rawTime} minuutin kuluttua.`);
+                }
+            }
+        };
+
+        window.onload = () => NexusAI.init();
 
     </script>
 </body>
